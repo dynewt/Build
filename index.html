@@ -1,0 +1,275 @@
+<html>
+<head>
+	<script type="text/javascript" src="http://archer.na.sas.com/libs/jquery.min.js">
+	</script>
+	<script src="//archer/libs/jquery-ui.min.js"></script>
+	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+	<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+	<title></title>
+	<style>
+		body {
+			background-color:#FFFFFF;
+		}
+		img#rack {
+			margin:auto;
+			display:block;
+			position:absolute;
+			top:150px;
+			left:259px;
+			height: 775px;
+			z-index:-10;
+			label {
+				display: inline-block;
+				width: 5em;
+			}
+		}
+	</style>
+</head>
+<body>
+
+
+	<h2>&nbsp;Room - <span id = "room"></span>  </h2>
+	<button> Search </button>
+	<input Id = "gridLocation" type = "text" maxlength="4" size="10" />
+	<form action="process.php" method="POST">
+		<p style= "margin-left:10px;">42U Rack<input Id = "rackSize" value = "42" name = "rackSize" type = "radio"/></p>
+		<p style= "margin-left:10px;">40U Rack<input Id = "rackSize" value = "40" name = "rackSize" type = "radio"/></p>
+		<p>
+		<div style="border-style:solid; background-color: white; height: 400px; width: 250px; margin-top:150px; margin-left:505">
+		<h3>&nbsp;Rack Details - <span id = "gL"></span></h3>
+		<p>&nbsp;Total U: <span id = "rack"></span> </p>
+		<p>&nbsp;Total U in use:<span id = "Used"></span></p>
+		<p>&nbsp;Avalible U:<span id = "Left"></span> </p>
+		<p>&nbsp;Max power: <span id = "Watts"></span></p>
+		<p>&nbsp;Max BTU: <span id = "BTU"></span> </p>
+		<p>&nbsp;Total Weight: <span id = ""></span> </p>
+		<!--
+		<p>&nbsp;Current power:<span id = ""></span> </p>
+		<p>&nbsp;Current BTU:<span id = ""></span> </p>
+		-->
+		
+		</div></p>
+		<div style="border-style:solid; background-color: white; height: 400px; width: 200px; margin-top:-420px; margin-left:30">
+		<h3>&nbsp;Server Information</h3>
+		<!--
+		
+		-->
+		<p>&nbsp;Asset Tag: <span id = "assettag"></span></p>
+		<p>&nbsp;Serial Number: <span id = "serial_number"></span> </p>
+		<p>&nbsp;Model: <span id = "model"></span></p>
+		<p>&nbsp;U Size: <span id = "u_size"></span> </p>
+		<p>&nbsp;Max power: <span id = ""></span> </p>
+		<p>&nbsp;Power Supplies: <span id = ""></span> </p>
+		<p>&nbsp;Weight: <span id = ""></span> </p>
+
+		</div></p>
+		
+		<img id="rack" src="42U-Rack.png"/>
+
+		<script type="text/javascript">
+
+			$("button").on("click", function(){
+				var grid = document.getElementById("gridLocation").value;	
+				var rackSize = 0;
+				var room = "";
+				rackSize = $("input:radio:checked").val();
+				var u_used = 0;
+				var model = "";
+				var manufacturer = "";
+				var max_watts_used = 0;
+				var u_position = 0;
+				var u_size_img = 0;
+				var TOP = 0;
+				var bottomOfRack = 906.1;
+				var u_used_pixels;
+				$.getJSON("get.php?grid=" + grid, function (JSON) {
+					JSON.value;
+					/*if (rackSize != 0){
+						$.ajax({
+							url: "gridUpdate.php",
+							data: {
+								"grid": grid,
+								"size": rackSize
+							}
+						});	
+					}
+					else{
+						$.ajax({
+							url: "gridGet.php",
+							data: {
+								grid: grid
+							},
+							async: false,
+							success: function(size) {	
+								rackSize = size;
+							}
+						});
+					};
+					
+					if (rackSize == 40) {
+						$('body').append('<img id= "notUsable" src="NOTUSABLE.png" border = 0/>');
+						$('#notUsable').css("width", 186).css("position", "absolute").css("left", 282.2).css("top", 170);
+					};*/
+					rackSize = 42;
+					var Img = "";
+					JSON.forEach(function(value,index,array){
+						if(value.u_position != 0){
+							model = (value.model);
+							manufacturer = (value.manufacturer);
+							//Img = "//archer.na.sas.com/images/servers/" + manufacturer + "/"+ model + ".png";
+							Img = "//archer.na.sas.com/matthew/build/servers/" + manufacturer + "/"+ model + ".png";
+							var serial_number = (value.serial_number);
+							var asset_tag = value.asset_tag;
+							var u_size = (value.u_size);
+							room = (value.room);
+							room = room.toUpperCase();
+							$('body').append('<a href="http://rimaster.na.sas.com/inventory/physical.php?k='+value.asset_tag+'" target="_blank"> <img alt= "'+asset_tag+'"  title="'+model+'" id="'+serial_number+'" name = "'+u_size+'" src="'+ Img + '" border = 0/> </a>');
+							u_position = (value.u_position) * 17.1;
+							u_size_img = (value.u_size) * 17.1;
+							TOP = bottomOfRack - u_position;
+							TOP = TOP - u_size_img;
+							u_used_pixels = u_used * 17.1;
+							u_used = u_used + (value.u_size);
+							max_watts_used = max_watts_used + (value.max_watts);
+							var u_left;
+							u_left = rackSize - u_used;
+							var GLOC = "";
+							var BTU = max_watts_used * 3.412141633;
+							BTU =  BTU.toFixed(0);
+							GLOC = grid.toUpperCase();
+							$("span#Left").html(u_left);
+							$("span#room").html(room);
+							$("span#rack").html(rackSize);
+							$("span#gL").html(GLOC);
+							$("span#Used").html(" " + u_used);
+							$("span#Watts").html(max_watts_used + " Watts");
+							$("span#BTU").html(BTU + " BTU")
+							$("img:not(#rack):last").css("width", 186).css("position", "absolute").css("left", 282.2).css("top", TOP);
+						};
+
+
+						$(function() {
+							$("img")
+							.mouseover(function() { 
+								$('span#assettag').html(this.alt);
+								$('span#model').html(this.title);
+								$('span#serial_number').html(this.id);
+								$('span#u_size').html(this.name);
+							})
+							.mouseout(function() {
+								$('span#assettag').html('');
+								$('span#model').html('');
+								$('span#serial_number').html('');
+								$('span#u_size').html('');
+							})	
+						});
+
+					});
+});
+
+});
+
+$('#gridLocation').keydown(function (e){
+	if(e.keyCode == 13){
+		var grid = document.getElementById("gridLocation").value;
+		var rackSize = $("input:radio:checked").val();
+		var u_used = 0;
+		var model = "";
+		var max_watts_used = 0;
+		var u_position = 0;
+		var u_size_img = 0;
+		var TOP = 0;
+		var bottomOfRack = 906.1;
+		var u_used_pixels;
+		$.getJSON("get.php?grid=" + grid, function (JSON) {
+			JSON.value;
+			/*if (rackSize != 0){
+				$.ajax({
+					url: "gridUpdate.php",
+					data: {
+						"grid": grid,
+						"size": rackSize
+					}
+				});		
+			}
+			else{
+				$.ajax({
+					url: "gridGet.php",
+					data: {
+						grid: grid
+					},
+					async: false,
+					success: function(size) {
+						rackSize = size;
+					}
+				});
+			};
+			if (rackSize == 40) {
+				$('body').append('<img id= "notUsable" src="NOTUSABLE.png" border = 0/>');
+				$('#notUsable').css("width", 186).css("position", "absolute").css("left", 282.2).css("top", 170);
+			};*/
+			rackSize = 42;
+					var Img = "";
+					JSON.forEach(function(value,index,array){
+						if(value.u_position != 0){
+							model = (value.model);
+							manufacturer = (value.manufacturer);
+							//Img = "//archer.na.sas.com/images/servers/" + manufacturer + "/"+ model + ".png";
+							Img = "//archer.na.sas.com/matthew/build/servers/" + manufacturer + "/"+ model + ".png";
+							var serial_number = (value.serial_number);
+							var asset_tag = value.asset_tag;
+							var u_size = (value.u_size);
+							room = (value.room);
+							room = room.toUpperCase();
+							$('body').append('<a href="http://rimaster.na.sas.com/inventory/physical.php?k='+value.asset_tag+'" target="_blank"> <img alt= "'+asset_tag+'"  title="'+model+'" id="'+serial_number+'" name = "'+u_size+'" src="'+ Img + '" border = 0/> </a>');
+							u_position = (value.u_position) * 17.1;
+							u_size_img = (value.u_size) * 17.1;
+							TOP = bottomOfRack - u_position;
+							TOP = TOP - u_size_img;
+							u_used_pixels = u_used * 17.1;
+							u_used = u_used + (value.u_size);
+							max_watts_used = max_watts_used + (value.max_watts);
+							var u_left;
+							u_left = rackSize - u_used;
+							var GLOC = "";
+							var BTU = max_watts_used * 3.412141633;
+							BTU =  BTU.toFixed(0);
+							GLOC = grid.toUpperCase();
+							$("span#Left").html(u_left);
+							$("span#room").html(room);
+							$("span#rack").html(rackSize);
+							$("span#gL").html(GLOC);
+							$("span#Used").html(" " + u_used);
+							$("span#Watts").html(max_watts_used + " Watts");
+							$("span#BTU").html(BTU + " BTU")
+							$("img:not(#rack):last").css("width", 186).css("position", "absolute").css("left", 282.2).css("top", TOP);
+						};
+
+
+						$(function() {
+							$("img")
+							.mouseover(function() { 
+								$('span#assettag').html(this.alt);
+								$('span#model').html(this.title);
+								$('span#serial_number').html(this.id);
+								$('span#u_size').html(this.name);
+							})
+							.mouseout(function() {
+								$('span#assettag').html('');
+								$('span#model').html('');
+								$('span#serial_number').html('');
+								$('span#u_size').html('');
+					})	
+				});
+
+			});
+});
+
+};
+});
+
+
+
+</script>
+</body>
+</html>
